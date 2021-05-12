@@ -6,7 +6,7 @@ export const UNDEFINED  = undefined;
 // ================================================
 export const wnd        = window;
 export const doc        = document;
-export const docStyle   = doc.getElementsByTagName('style')[0];
+export const docStyle   = /*@__PURE__*/doc.getElementsByTagName('style')[0];
 export const bodyNative = doc.body;
 bodyNative.isAttachedToDOM = TRUE;
 bodyNative.isLifecycleTracked = TRUE;
@@ -21,6 +21,7 @@ export const isObject = o => typeof o === 'object' && o !== null;
 export const isString = (value) => typeof value === 'string';
 export const isNumber = value => Number.isFinite(value);
 export const isCapitalLetter = letter => letter === letter.toUpperCase();
+// ------------------------------------------------
 export const makeArray = element => isArray(element) ? element : [element];
 export const makeFirstCapital = text => text[0].toUpperCase() + text.substr(1);
 export const makeEnumFromStringArray = arr => {
@@ -44,15 +45,18 @@ export const firstNode = element => element.firstChild;
 export const setAttribute = (element, attribute, value) => element.setAttribute(attribute, value);
 export const getAttribute = (element, attribute) => element.getAttribute(attribute);
 export const removeAttribute = (element, attribute) => element.removeAttribute(attribute);
-
-export const placeholder = text => element => setAttribute(element, 'placeholder', text);
+// ------------------------------------------------
+export const placeholder = (text, el) => element => setAttribute(element || el, 'placeholder', text);
+export const href = (text, el) => element => setAttribute(element || el, 'href', text);
+export const src = (text, el) => element => setAttribute(element || el, 'src', text);
+export const _id_ = (text, el) => element => setAttribute(element || el, 'id', text);
 
 
 // ################################################
 // Events section
 // ################################################
 
-export const SoftEvent = (...fixedArgs) => {
+export const SoftEvent                  = (...fixedArgs) => {
 
 //     const list = new Map();
 //     return {
@@ -68,7 +72,7 @@ export const SoftEvent = (...fixedArgs) => {
     list.raise = (...param) => list.forEach((callback) => callback( ...param, ...fixedArgs));
     return list;
 }
-export const SoftEventSelective = (...fixedArgs) => {
+export const SoftEventSelective         = (...fixedArgs) => {
     const map = new Map();
     return {
         add: (obj, callback) => {
@@ -103,12 +107,8 @@ export const SoftEventSelective = (...fixedArgs) => {
 
 // ------------------------------------------------
 
-export const addEvent       = (element, eventName, eventListener) => element.addEventListener(eventName, eventListener);
-export const removeEvent    = (element, eventName, eventListener) => element.removeEventListener(eventName, eventListener);
-
-export const eventAdd       = (element, eventObject) => {
-    addEvent(element, eventObject.__name__, eventObject.__listener__)
-}
+export const addEvent_raw               = (element, eventName, eventListener) => element.addEventListener(eventName, eventListener);
+export const removeEvent_raw            = (element, eventName, eventListener) => element.removeEventListener(eventName, eventListener);
 
 export const preventDefault             = event => event.preventDefault();
 export const stopPropagation            = event => event.stopPropagation();
@@ -116,11 +116,15 @@ export const stopImmediatePropagation   = event => event.stopImmediatePropagatio
 export const getEventPath               = event => event.composedPath();
 
 // ------------------------------------------------
+const eventAdd                          = (element, eventObject) => {
+    addEvent_raw(element, eventObject.__name__, eventObject.__listener__)
+}
+// ------------------------------------------------
 
 export const createEvent = (eventName) => {
     const event = (eventListener, optionalElement) => {
         if (optionalElement) {
-            addEvent(optionalElement, eventName, eventListener);
+            addEvent_raw(optionalElement, eventName, eventListener);
         } else {
             return {
                 __op__:         OP_EVENT,
@@ -129,7 +133,7 @@ export const createEvent = (eventName) => {
             }
         }
     }
-    event.remove = (element, eventListener) => removeEvent(element, eventName, eventListener);
+    event.remove = (element, eventListener) => removeEvent_raw(element, eventName, eventListener);
     return event;
 }
 
@@ -151,6 +155,7 @@ export const onFocusIn =        /*@__PURE__*/createEvent(`focusin`);  // bubbles
 export const onFocusOut =       /*@__PURE__*/createEvent(`focusout`); // bubbles
 export const onBlur =           /*@__PURE__*/createEvent(`blur`);
 export const onWndResize =      /*@__PURE__*/createEvent(`resize`);
+
 
 // -----------------------------------------------------------------
 
@@ -185,7 +190,7 @@ const onLifecycle_CheckIfParentsAttachedToDOM = (element, child) => {
     const isAttachedToDOM =
         forEachParent(element, e => {
             if (e.isLifecycleTracked) return e.isAttachedToDOM;
-        });
+        }, TRUE);
 
     forEachParent(element, e => {
         e.isAttachedToDOM = isAttachedToDOM;
@@ -678,9 +683,13 @@ const postAppendLifecycleProcess = (element, child, previosParentOfChild) => {
         onLifecycle_UpdateElementAndParentsDueToRemoval(element);
     }
 
-    if (!element.isLifecycleTracked || !element.onLifecycleListeningChildren) {
+
+    // if (element.onLifecycleListeningChildren) {
+    //     // element.isLifecycleTracked = TRUE;
+    //     element.onLifecycleListeningChildren.set(child, child);
+    // } else if (!element.isLifecycleTracked || !element.onLifecycleListeningChildren) {
         onLifecycle_CheckIfParentsAttachedToDOM(element, child);
-    }
+    // }
 
     if (element.isAttachedToDOM) {
         if (!child.isAttachedToDOM) {

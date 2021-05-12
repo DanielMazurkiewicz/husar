@@ -166,7 +166,7 @@ export const StoreValue = (objectToExtend, name, type='content-value') => {
             const old = obj.value;
             if (old !== v) {
                 obj.value = v;
-                obj.onChange.raise(v, old);
+                obj.onChange.raise(v, old, objectToExtend);
             }
         },
         g:              () => obj.value
@@ -195,7 +195,6 @@ export const StoreReferencesList = (objectToExtend, name) => {
         owner:          objectToExtend,
         name,
 
-        value:          null,
         add:            (ref) => {
             if (!map.has(ref)) {
                 map.set(ref, ref);
@@ -451,4 +450,21 @@ export const StoreViewIf = (value, htmlFunctionForTrue, htmlFunctionForFalse, in
         }
     }, parentHTML);
 }
+export const StoreViewValue = (value, htmlValuePresenter) => {
+    onLifecycle((status) => {
+        switch (status) {
+            case LIFECYCLE_ATTACHED:
+                htmlValuePresenter.s(value.g());
+                value.onChange.add(htmlValuePresenter.s);
+                htmlValuePresenter.onValueChange && htmlValuePresenter.onValueChange.add(value.s);
+                break;
 
+            case LIFECYCLE_DETACHED:
+                htmlValuePresenter.onValueChange && htmlValuePresenter.onValueChange.del(value.s);
+                value.onChange.del(htmlValuePresenter.s);
+                break;
+        }
+    }, htmlValuePresenter);
+
+    return htmlValuePresenter;
+}
