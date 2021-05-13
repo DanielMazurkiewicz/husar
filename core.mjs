@@ -13,6 +13,7 @@ bodyNative.isLifecycleTracked = TRUE;
 bodyNative.onLifecycleListeningChildren = new Map();
 
 
+
 // ================================================
 
 export const isArray = tested => Array.isArray(tested);
@@ -20,6 +21,7 @@ export const isFunction = v => typeof v === 'function';
 export const isObject = o => typeof o === 'object' && o !== null;
 export const isString = (value) => typeof value === 'string';
 export const isNumber = value => Number.isFinite(value);
+export const isMap = object => object instanceof Map;
 export const isCapitalLetter = letter => letter === letter.toUpperCase();
 // ------------------------------------------------
 export const makeArray = element => isArray(element) ? element : [element];
@@ -35,7 +37,28 @@ export const makeEnumFromStringArray = arr => {
     });
     return result;
 }
-
+export const makeCharList = (...list) => {
+    list = list.map(l => {
+        if (isString(l)) {
+            const newList = {};
+            for (let i = 0; i < l.length; i++) {
+                newList[l[i]] = 1;
+            }
+            return newList;
+        }
+        return l;
+    });
+    const result = Object.assign({}, ...list)
+    return result; 
+}
+export const excludeFromCharList = (charList, ...listToExclude) => {
+    charList = makeCharList(charList);
+    listToExclude = makeCharList(...listToExclude);
+    for (let char in listToExclude) {
+        delete charList[char];
+    }
+    return charList;
+}
 // ================================================
 export const parentNode = element => element.parentNode;
 export const previousNode = element => element.previousSibling;
@@ -606,23 +629,67 @@ const elementCustomOperations = {
 }
 const createElementCore = (tagName, ce = createElement) => (...children) => {
     const element = ce(tagName);
-    let i = 0;
-    for (; i < children.length; i++) {
+
+    /* less flexible, faster version here: */
+
+    // let i = 0;
+    // for (; i < children.length; i++) {
+    //     const child = children[i];
+    //     let op;
+    //     if (child) {
+    //         if (isFunction(child)) {
+    //             child(element);
+    //         } else if (op = child.__op__) {
+    //             elementCustomOperations[op](element, child);
+    //         } else break;    
+    //     }
+    // }
+
+    // for (; i < children.length; i++) {
+    //     const child = children[i];
+    //     child && appendChildOnBottom(element, child);
+    // }
+
+    // ==== v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v ====
+
+    /* more flexible, slower version here: */
+    for (let i = 0; i < children.length; i++) {
         const child = children[i];
         let op;
-        if (isFunction(child)) {
-            child(element);
-        } else if (op = child.__op__) {
-            elementCustomOperations[op](element, child);
-        } else break;
-    }
-
-    for (; i < children.length; i++) {
-        appendChildOnBottom(element, children[i]);
+        if (child) {
+            if (isFunction(child)) {
+                child(element);
+            } else if (op = child.__op__) {
+                elementCustomOperations[op](element, child);
+            } else if (isString(child)) {
+                appendChildOnBottom(element, text(child))
+            } else {
+                appendChildOnBottom(element, child);
+            }
+        }
     }
 
     return element; 
 }
+export const separateElementArgs = args => {
+    const operations = [];
+    const other = [];
+    const result = {
+        operations, other
+    }
+
+    for (let i=0; i < args.length; i++) {
+        const child = args[i];
+        if (child.__op__) {
+            operations.push(child);
+        } else {
+            other.push(child);
+        }
+    }
+
+    return result;
+}
+
 export const comment    = (data = '') => doc.createComment(data);
 export const text       = (txt) => doc.createTextNode(txt);
 export const body       = /*@__PURE__*/createElementCore('', () => bodyNative);

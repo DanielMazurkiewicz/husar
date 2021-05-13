@@ -1,10 +1,12 @@
-export const aliases = {
+import { normalizeDocObject } from "../utils/normalize.mjs"
+
+export const aliases = normalizeDocObject({
+    title:          `Aliases`,
     module:         `core.mjs`,
     type:           `alias`,
     description: 
-`
-Aliases are convenience literals that are shorter to type and/or produce smaller code after minification
-`,
+        `Aliases are convenience literals that are shorter to type and/or produce 
+        smaller code after minification.`,
 list: [
 
 // --------------------------------------
@@ -76,7 +78,9 @@ list: [
     ],
     returns: {
         type:       `HTMLElement`,
-        description:`Previous sibling element to given node element (or 'null' if no previous element)`
+        description: 
+            `Previous sibling element to given node element (or 'null' if no 
+            previous element)`
     },
     description:    `Alias to 'previousSibling' property of given 'element'`,
     usage:          `const previous = previousNode(element);`
@@ -115,7 +119,9 @@ list: [
             type: 'string'
         },
     ],
-    description:    `Sets HTMLElement attribute value. Alias to 'setAttribute' method of given 'element'`,
+    description:    
+        `Sets to given HTMLElement attribute a value. Alias to 'setAttribute' method 
+        of given 'element'`,
     usage:          `setAttribute(inputElement, 'type', 'text');`
 },
 {   name:           `getAttribute`,
@@ -136,7 +142,8 @@ list: [
         type:       `string | null`,
         description:`Value of attribute`
     },
-    description:    `Gets HTMLElement attribute value. Alias to 'getAttribute' method of given 'element'`,
+    description:    
+        `Gets a value from given HTMLElement attribute. Alias to 'getAttribute' method of given 'element'`,
     usage:          `const inputElementType = getAttribute(inputElement, 'type');`
 },
 {   name:           `removeAttribute`,
@@ -153,9 +160,11 @@ list: [
         },
 
     ],
-    description:    `Removes attribute from given HTMLElement. Alias to 'removeAttribute' method of given 'element'`,
+    description:    
+        `Removes attribute from given HTMLElement. Alias to 'removeAttribute' method of given 'element'`,
     usage:          `removeAttribute(inputElement, 'type');`
 },
+// --------------------------------------
 
 ]
-};
+});

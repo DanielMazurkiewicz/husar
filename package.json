@@ -1,9 +1,18 @@
 {
   "name": "hussar",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Framework for those who would like to stick to JS only (no HTML nor CSS) and produce relatively fast and fairly small sized web apps",
   "main": "core.mjs",
   "repository": "git@github.com:DanielMazurkiewicz/hussar.git",
   "author": "Daniel Mazurkiewicz <daniel.mazurkiewicz.dm@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.11.20"
+  },
+  "scripts": {
+    "doc-debug-serve": "esbuild --serve=127.0.0.1:8081 --servedir=./docs",
+    "doc-debug-compile": "esbuild ./docs/src/index.mjs --watch --bundle --sourcemap --platform=browser --outfile=./docs/bundle.js",
+    "doc-debug": "yarn doc-debug-serve & yarn doc-debug-compile",
+    "doc": "yarn doc-debug-compile"
+  }
 }
