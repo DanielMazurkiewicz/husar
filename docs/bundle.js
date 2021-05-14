@@ -28,24 +28,26 @@
   // core.mjs
   var TRUE = 1;
   var FALSE = 0;
+  var toBoolean = (value) => value ? TRUE : FALSE;
   var UNDEFINED = void 0;
+  var wnd = window;
   var doc = document;
   var docStyle = doc.getElementsByTagName("style")[0];
   var bodyNative = doc.body;
   bodyNative.isAttachedToDOM = TRUE;
   bodyNative.isLifecycleTracked = TRUE;
   bodyNative.onLifecycleListeningChildren = new Map();
-  var isArray = (tested) => Array.isArray(tested);
+  var isArray2 = (tested) => Array.isArray(tested);
   var isFunction = (v) => typeof v === "function";
   var isObject = (o) => typeof o === "object" && o !== null;
   var isString = (value) => typeof value === "string";
   var isNumber = (value) => Number.isFinite(value);
-  var makeArray = (element) => isArray(element) ? element : [element];
+  var makeArray = (element) => isArray2(element) ? element : [element];
   var makeFirstCapital = (text2) => text2[0].toUpperCase() + text2.substr(1);
   var makeEnumFromStringArray = (arr) => {
     const result = {};
     arr.forEach((e, i) => {
-      if (isArray(e)) {
+      if (isArray2(e)) {
         e.forEach((el) => result[el] = i + 1);
       } else {
         result[e] = i + 1;
@@ -68,6 +70,7 @@
     return result;
   };
   var parentNode = (element) => element.parentNode;
+  var setAttribute = (element, attribute, value) => element.setAttribute(attribute, value);
   var SoftEvent = (...fixedArgs) => {
     const list2 = new Map();
     list2.add = (callback) => (list2.set(callback, callback), callback);
@@ -76,9 +79,26 @@
     return list2;
   };
   var addEvent_raw = (element, eventName, eventListener) => element.addEventListener(eventName, eventListener);
+  var removeEvent_raw = (element, eventName, eventListener) => element.removeEventListener(eventName, eventListener);
   var eventAdd = (element, eventObject) => {
     addEvent_raw(element, eventObject.__name__, eventObject.__listener__);
   };
+  var createEvent = (eventName) => {
+    const event = (eventListener, optionalElement) => {
+      if (optionalElement) {
+        addEvent_raw(optionalElement, eventName, eventListener);
+      } else {
+        return {
+          __op__: OP_EVENT,
+          __name__: eventName,
+          __listener__: eventListener
+        };
+      }
+    };
+    event.remove = (element, eventListener) => removeEvent_raw(element, eventName, eventListener);
+    return event;
+  };
+  var onChange = /* @__PURE__ */ createEvent(`change`);
   var LIFECYCLE_DETACHED = 0;
   var LIFECYCLE_ATTACHED = 1;
   var onLifecycle_CheckIfParentsAttachedToDOM = (element, child) => {
@@ -178,11 +198,11 @@
   var stylePrefixedPropertyGroup = (prefix, exclusions = {}, importance = [], directUseCallback) => {
     const styleImportance = makeEnumFromStringArray(importance);
     return (valuesObject, styleObject) => {
-      if (isObject(valuesObject) && !isArray(valuesObject)) {
+      if (isObject(valuesObject) && !isArray2(valuesObject)) {
         let words = [];
         const addPropName = (name) => words.push([name, styleImportance[name] || 11111]);
         const processSingle = (name, value) => {
-          if (isObject(value) && !isArray(value)) {
+          if (isObject(value) && !isArray2(value)) {
             addPropName(name);
             process(value);
             words.pop();
@@ -297,7 +317,7 @@
       let propertyValue = __compiled__[name];
       if (isNumber(propertyValue)) {
         propertyValue = em(propertyValue);
-      } else if (isArray(propertyValue)) {
+      } else if (isArray2(propertyValue)) {
         propertyValue = propertyValue.map((e) => {
           if (isNumber(e))
             e = em(e);
@@ -438,10 +458,12 @@
     }
     return result;
   };
+  var comment = (data = "") => doc.createComment(data);
   var text = (txt) => doc.createTextNode(txt);
   var body = /* @__PURE__ */ createElementCore("", () => bodyNative);
   var div = /* @__PURE__ */ createElementCore("div");
   var span = /* @__PURE__ */ createElementCore("span");
+  var input = /* @__PURE__ */ createElementCore("input");
   var forEachParent = (element, callback, includeElement) => {
     let result;
     if (!includeElement)
@@ -454,6 +476,7 @@
       element = parentNode(element);
     }
   };
+  var replaceChild_raw = (element, childNew, childOld) => element.replaceChild(childNew, childOld);
   var appendChildOnBottom_raw = (element, child) => element.appendChild(child);
   var postAppendLifecycleProcess = (element, child, previosParentOfChild) => {
     if (previosParentOfChild && previosParentOfChild !== element) {
@@ -468,6 +491,26 @@
     } else {
       if (child.isAttachedToDOM) {
         onLifecycleRaise(child, LIFECYCLE_DETACHED);
+      }
+    }
+  };
+  var postRemoveLifecycleProcess = (element, child) => {
+    onLifecycleRaise(child, LIFECYCLE_DETACHED);
+    const onLifecycleListeningChildren = element.onLifecycleListeningChildren;
+    if (onLifecycleListeningChildren) {
+      onLifecycleListeningChildren.delete(child);
+      onLifecycle_UpdateElementAndParentsDueToRemoval(element);
+    }
+  };
+  var replaceChild = (element, childNew, childOld) => {
+    if (childNew !== childOld) {
+      const previosParentOfChildNew = parentNode(childNew);
+      replaceChild_raw(element, childNew, childOld);
+      if (childOld.isLifecycleTracked) {
+        postRemoveLifecycleProcess(element, childOld);
+      }
+      if (childNew.isLifecycleTracked) {
+        postAppendLifecycleProcess(element, childNew, previosParentOfChildNew);
       }
     }
   };
@@ -881,6 +924,233 @@
     return root;
   };
 
+  // array.mjs
+  "use strict";
+  var arrayForEachRev = (array, callback) => {
+    let i = array.length - 1;
+    while (i >= 0) {
+      callback(array[i], i);
+      i--;
+    }
+  };
+
+  // base93.mjs
+  var numberToBase93 = (number) => {
+    number = number % 93;
+    number += 32;
+    if (number >= 34)
+      number++;
+    if (number >= 92)
+      number++;
+    return String.fromCharCode(number);
+  };
+
+  // random.mjs
+  var crypto = wnd.crypto;
+  var getRandomString = (numOf, characters = true) => {
+    const elements = Math.ceil(numOf / (characters ? 1 : 6.539));
+    const randoms = new Uint16Array(elements);
+    crypto.getRandomValues(randoms);
+    let result = "";
+    for (let i = 0; i < elements; i++) {
+      result += numberToBase93(randoms[i]);
+    }
+    return result;
+  };
+
+  // store.mjs
+  var StoreObjectBase = (type) => {
+    const delTemporary = () => {
+      if (obj.parent) {
+        obj.parentContent.onElementDel(obj);
+        if (!obj.previous)
+          obj.parentContent.first = obj.next;
+        if (!obj.next)
+          obj.parentContent.last = obj.previous;
+        obj.previous.next = obj.next;
+        obj.next.previous = obj.previous;
+        obj.parent = obj.parentContent = obj.previous = obj.next = null;
+      }
+    };
+    const obj = {
+      id: getRandomString(10),
+      type,
+      parent: null,
+      parentContent: null,
+      previous: null,
+      next: null,
+      delTemporary,
+      addBefore: (element) => {
+        element.delTemporary();
+        if (obj.previous) {
+          obj.previous.next = element;
+          element.previous = obj.previous;
+        }
+        obj.previous = element;
+        element.next = obj;
+        element.parent = obj.parent;
+        element.parentContent = obj.parentContent;
+        element.parentContent.onElementAdd.raise(element);
+      },
+      addAfter: (element) => {
+        element.delTemporary();
+        if (obj.next) {
+          obj.next.previous = element;
+          element.next = obj.next;
+        }
+        obj.next = element;
+        element.next = obj;
+        element.parent = obj.parent;
+        element.parentContent = obj.parentContent;
+        element.parentContent.onElementAdd.raise(element);
+      }
+    };
+    return obj;
+  };
+  var StoreValue = (objectToExtend, name, type = "content-value") => {
+    const obj = objectToExtend[name] = {
+      type,
+      owner: objectToExtend,
+      name,
+      value: null,
+      s: (v) => {
+        const old = obj.value;
+        if (old !== v) {
+          obj.value = v;
+          obj.onChange.raise(v, old, objectToExtend);
+        }
+      },
+      g: () => obj.value
+    };
+    obj.onChange = SoftEvent(objectToExtend, obj);
+    return obj;
+  };
+  var $Boolean = StoreValue;
+  var internalKindId = -1;
+  var StoreKind = (...description2) => {
+    let name;
+    if (!name)
+      name = internalKindId--;
+    const descriptionResolved = {};
+    arrayForEachRev(description2, (d) => {
+      if (d.constructorDescription) {
+        Object.assign(descriptionResolved, d.constructorDescription);
+      } else if (isObject(d)) {
+        Object.assign(descriptionResolved, d);
+      } else {
+        name = d;
+      }
+    });
+    if (!name)
+      name = internalKindId--;
+    const constructor = () => {
+      const obj = StoreObjectBase(name);
+      for (let name2 in descriptionResolved) {
+        descriptionResolved[name2](obj, name2);
+      }
+      return obj;
+    };
+    constructor.constructorName = name;
+    constructor.constructorDescription = descriptionResolved;
+    return constructor;
+  };
+  var $kind = StoreKind;
+  var StoreViewIf = (value, htmlFunctionForTrue, htmlFunctionForFalse, inversed) => (parentHTML) => {
+    const dummyComment = htmlFunctionForFalse || comment();
+    let oldChildHTML, newChildHTML;
+    const getChildHTML = inversed ? htmlFunctionForFalse ? (v) => newChildHTML = v ? htmlFunctionForFalse(value.owner) : htmlFunctionForTrue(value.owner) : (v) => newChildHTML = v ? dummyComment : htmlFunctionForTrue(value.owner) : htmlFunctionForFalse ? (v) => newChildHTML = v ? htmlFunctionForTrue(value.owner) : htmlFunctionForFalse(value.owner) : (v) => newChildHTML = v ? htmlFunctionForTrue(value.owner) : dummyComment;
+    const childReplacer = (v) => {
+      replaceChild(parentHTML, getChildHTML(v), oldChildHTML);
+      oldChildHTML = newChildHTML;
+    };
+    appendChildOnBottom(parentHTML, oldChildHTML = comment());
+    onLifecycle((status) => {
+      switch (status) {
+        case LIFECYCLE_ATTACHED:
+          childReplacer(value.g());
+          value.onChange.add(childReplacer);
+          break;
+        case LIFECYCLE_DETACHED:
+          value.onChange.del(childReplacer);
+          break;
+      }
+    }, parentHTML);
+  };
+  var StoreSyncValue = (value, htmlValuePresenter) => {
+    onLifecycle((status) => {
+      switch (status) {
+        case LIFECYCLE_ATTACHED:
+          htmlValuePresenter.s(value.g());
+          value.onChange.add(htmlValuePresenter.s);
+          htmlValuePresenter.onValueChange && htmlValuePresenter.onValueChange.add(value.s);
+          break;
+        case LIFECYCLE_DETACHED:
+          htmlValuePresenter.onValueChange && htmlValuePresenter.onValueChange.del(value.s);
+          value.onChange.del(htmlValuePresenter.s);
+          break;
+      }
+    }, htmlValuePresenter);
+    return htmlValuePresenter;
+  };
+  var $if = StoreViewIf;
+  var $sync = StoreSyncValue;
+
+  // inputTypes.mjs
+  var typeCheckbox = (element) => {
+    setAttribute(element, "type", "checkbox");
+    element.onValueChange = SoftEvent(element);
+    let internalValue = FALSE;
+    const setElementValue = () => {
+      if (internalValue === UNDEFINED) {
+        element.checked = FALSE;
+        element.indeterminate = TRUE;
+      } else {
+        element.checked = internalValue;
+        element.indeterminate = FALSE;
+      }
+    };
+    element.s = (v) => {
+      const internalValuePrevious = internalValue;
+      internalValue = v === UNDEFINED ? UNDEFINED : toBoolean(v);
+      if (internalValue !== internalValuePrevious) {
+        setElementValue();
+        element.onValueChange.raise(internalValue, internalValuePrevious, element);
+      }
+    };
+    element.g = () => internalValue;
+    const toggle = () => {
+      if (!element.readOnly) {
+        if (internalValue === UNDEFINED) {
+          internalValue = TRUE;
+        } else if (internalValue === TRUE) {
+          internalValue = FALSE;
+        } else if (element.isTristate) {
+          internalValue = UNDEFINED;
+        } else {
+          internalValue = TRUE;
+        }
+        setElementValue();
+      }
+    };
+    onChange(() => {
+      const internalValuePrevious = internalValue;
+      toggle();
+      element.onValueChange.raise(internalValue, internalValuePrevious, element);
+    }, element);
+  };
+
+  // docs/src/components/filter.mjs
+  var FilterData = $kind({
+    showDetails: $Boolean,
+    showParameters: $Boolean,
+    showCode: $Boolean
+  });
+  var filterData = FilterData();
+  var filter = () => {
+    const root = div("Show details: ", $sync(filterData.showDetails, input(typeCheckbox)), $if(filterData.showDetails, () => span("   Show parameters description: ", $sync(filterData.showParameters, input(typeCheckbox)), "   Show code examples: ", $sync(filterData.showCode, input(typeCheckbox)))));
+    return root;
+  };
+
   // fonts.mjs
   var mono_free = `FreeMono,monospace`;
 
@@ -984,7 +1254,7 @@
     }
   });
   var method = (m) => {
-    const root = div(div(span(methodStyleName, m.name), parametersShort(m.params)), description(m.description), parameters(m.params), returns(m.returns), importStatement(m), usageList(m.usage));
+    const root = div(div(span(methodStyleName, m.name), parametersShort(m.params)), $if(filterData.showDetails, () => div(description(m.description), $if(filterData.showParameters, () => parameters(m.params)), returns(m.returns), $if(filterData.showCode, () => div(importStatement(m), usageList(m.usage))))));
     return root;
   };
 
@@ -996,7 +1266,7 @@
     }
   });
   var singleton = (s) => {
-    const root = div(div(singletonStyleName, s.name), description(s.description), importStatement(s), usageList(s.usage));
+    const root = div(div(singletonStyleName, s.name), $if(filterData.showDetails, () => div(description(s.description), $if(filterData.showCode, () => div(importStatement(s), usageList(s.usage))))));
     return root;
   };
 
@@ -1032,6 +1302,6 @@
   };
 
   // docs/src/index.mjs
-  body(docDb(attributes), docDb(aliases));
+  body(filter(), docDb(attributes), docDb(aliases));
 })();
 //# sourceMappingURL=bundle.js.map

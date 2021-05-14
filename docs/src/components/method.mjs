@@ -1,8 +1,11 @@
 
 import { div } from '../../../core.mjs';
 import { style } from '../../../core.mjs';
-import { text } from '../../../core.mjs';
 import { span } from '../../../core.mjs';
+
+import { $if } from '../../../store.mjs';
+import { filterData } from './filter.mjs';
+
 import { description } from './description.mjs';
 import { importStatement } from './importStatement.mjs';
 import { parameters } from './parameters.mjs';
@@ -22,11 +25,19 @@ const methodStyleName = style({
 export const method = m => {
     const root = div(
         div(span(methodStyleName, m.name), parametersShort(m.params)),
-        description(m.description),
-        parameters(m.params),
-        returns(m.returns),
-        importStatement(m),
-        usageList(m.usage)
+        $if(filterData.showDetails,
+            () => div(
+                description(m.description),
+                $if(filterData.showParameters, () => parameters(m.params)),
+                returns(m.returns),
+                $if(filterData.showCode, () =>
+                    div(
+                        importStatement(m),
+                        usageList(m.usage)        
+                    )
+                )
+            )
+        )
     )
     return root;
 }

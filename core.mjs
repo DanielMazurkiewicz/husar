@@ -2,7 +2,10 @@ import { runIfInactive } from "./debouncer.mjs";
 
 export const TRUE       = 1;
 export const FALSE      = 0;
+export const toBoolean  = value => value ? TRUE : FALSE;
+// ================================================
 export const UNDEFINED  = undefined;
+export const NULL       = null;
 // ================================================
 export const wnd        = window;
 export const doc        = document;

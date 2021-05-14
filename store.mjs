@@ -219,6 +219,17 @@ export const StoreReferencesList = (objectToExtend, name) => {
     return obj;
 }
 
+export const $Reference         = StoreReference;
+export const $Boolean           = StoreValue;
+export const $Unsigned          = StoreValue;
+export const $Signed            = StoreValue;
+export const $Float             = StoreValue;
+export const $Text              = StoreValue;
+export const $List              = StoreList;
+export const $ListIndexed       = StoreListIndexed;
+export const $ListOfReferences  = StoreReferencesList;
+
+
 //==================================================================
 
 let internalKindId = -1;
@@ -249,6 +260,7 @@ export const StoreKind = (...description) => {
     constructor.constructorDescription = descriptionResolved;
     return constructor;
 }
+export const $kind = StoreKind;
 export const StoreHTMLRouter = (fallback, constructors = {}) => {
     const router = {
         fallback,
@@ -259,11 +271,11 @@ export const StoreHTMLRouter = (fallback, constructors = {}) => {
 
     return router;
 }
-
+export const $router = StoreHTMLRouter;
 //==================================================================
 
 const emptyConstructors = {};
-export const StoreViewList = (list, htmlRouter) => (parentHTML) => {
+export const StoreSyncList = (list, htmlRouter) => (parentHTML) => {
     
     let constructors, fallback;
     // -----------------------------------------
@@ -352,7 +364,7 @@ export const StoreViewList = (list, htmlRouter) => (parentHTML) => {
         }
     }, parentHTML);
 }
-export const StoreViewReference = (ref, htmlRouter) => (parentHTML) => {
+export const StoreSyncReference = (ref, htmlRouter) => (parentHTML) => {
     
     let constructors, fallback;
     // -----------------------------------------
@@ -433,14 +445,12 @@ export const StoreViewIf = (value, htmlFunctionForTrue, htmlFunctionForFalse, in
         oldChildHTML = newChildHTML;
     };
 
+    appendChildOnBottom(parentHTML, oldChildHTML = comment());
+
     onLifecycle((status) => {
         switch (status) {
             case LIFECYCLE_ATTACHED:
-                if (oldChildHTML) {
-                    childReplacer(value.g());
-                } else {
-                    appendChildOnBottom(parentHTML, oldChildHTML = getChildHTML(value.g()));
-                }
+                childReplacer(value.g());
                 value.onChange.add(childReplacer);
                 break;
 
@@ -450,7 +460,7 @@ export const StoreViewIf = (value, htmlFunctionForTrue, htmlFunctionForFalse, in
         }
     }, parentHTML);
 }
-export const StoreViewValue = (value, htmlValuePresenter) => {
+export const StoreSyncValue = (value, htmlValuePresenter) => {
     onLifecycle((status) => {
         switch (status) {
             case LIFECYCLE_ATTACHED:
@@ -468,3 +478,12 @@ export const StoreViewValue = (value, htmlValuePresenter) => {
 
     return htmlValuePresenter;
 }
+
+export const $if                = StoreViewIf;
+export const $sync              = StoreSyncValue;
+export const $syncList          = StoreSyncList;
+export const $syncReference     = StoreSyncReference;
+
+
+// TODO: $or $not $and $less $above $lessEqual $aboveEqual
+// TODO: $sum $sub $mul $div $neg
