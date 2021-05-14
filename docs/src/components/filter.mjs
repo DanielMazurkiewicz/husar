@@ -10,20 +10,23 @@ import { $if } from '../../../store.mjs';
 import { span } from '../../../core.mjs';
 
 
-
+/*
+    New data kind declaration
+*/
 const FilterData = $kind({
     showDetails:    $Boolean,
     showParameters: $Boolean,
     showCode:       $Boolean,
 });
 
+// Creating an object of data kind "FilterData"
 export const filterData = FilterData();
 
 export const filter = () => {
     const root = div(
         'Show details: ', $sync(filterData.showDetails, input(typeCheckbox)),
         $if(filterData.showDetails, 
-            ()=> span(
+            () => span(
                 '   Show parameters description: ', $sync(filterData.showParameters, input(typeCheckbox)),
                 '   Show code examples: ', $sync(filterData.showCode, input(typeCheckbox)),
             )

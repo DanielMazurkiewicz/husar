@@ -934,29 +934,8 @@
     }
   };
 
-  // base93.mjs
-  var numberToBase93 = (number) => {
-    number = number % 93;
-    number += 32;
-    if (number >= 34)
-      number++;
-    if (number >= 92)
-      number++;
-    return String.fromCharCode(number);
-  };
-
   // random.mjs
   var crypto = wnd.crypto;
-  var getRandomString = (numOf, characters = true) => {
-    const elements = Math.ceil(numOf / (characters ? 1 : 6.539));
-    const randoms = new Uint16Array(elements);
-    crypto.getRandomValues(randoms);
-    let result = "";
-    for (let i = 0; i < elements; i++) {
-      result += numberToBase93(randoms[i]);
-    }
-    return result;
-  };
 
   // store.mjs
   var StoreObjectBase = (type) => {
@@ -973,7 +952,6 @@
       }
     };
     const obj = {
-      id: getRandomString(10),
       type,
       parent: null,
       parentContent: null,
@@ -1029,8 +1007,6 @@
   var internalKindId = -1;
   var StoreKind = (...description2) => {
     let name;
-    if (!name)
-      name = internalKindId--;
     const descriptionResolved = {};
     arrayForEachRev(description2, (d) => {
       if (d.constructorDescription) {

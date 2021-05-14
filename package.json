@@ -1,6 +1,6 @@
 {
   "name": "hussar",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Framework for those who would like to stick to JS only (no HTML nor CSS) and produce relatively fast and fairly small sized web apps",
   "main": "core.mjs",
   "repository": "git@github.com:DanielMazurkiewicz/hussar.git",

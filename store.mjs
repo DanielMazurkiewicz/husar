@@ -36,7 +36,7 @@ export const StoreObjectBase = (type) => {
     }
 
     const obj = {
-        id:             getRandomString(10),
+        // id:             getRandomString(10),
         type,
 
         parent:         null,
@@ -235,7 +235,7 @@ export const $ListOfReferences  = StoreReferencesList;
 let internalKindId = -1;
 export const StoreKind = (...description) => {
     let name;
-    if (!name) name = internalKindId--;
+
     const descriptionResolved = {};
     arrayForEachRev(description, d => {
         if (d.constructorDescription) {
@@ -260,7 +260,6 @@ export const StoreKind = (...description) => {
     constructor.constructorDescription = descriptionResolved;
     return constructor;
 }
-export const $kind = StoreKind;
 export const StoreHTMLRouter = (fallback, constructors = {}) => {
     const router = {
         fallback,
@@ -271,7 +270,10 @@ export const StoreHTMLRouter = (fallback, constructors = {}) => {
 
     return router;
 }
+
+export const $kind = StoreKind;
 export const $router = StoreHTMLRouter;
+
 //==================================================================
 
 const emptyConstructors = {};
