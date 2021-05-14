@@ -17,8 +17,10 @@ At current stage it starts to be usable:
 - Produce fast code
 
 ## Documentation
-Documentation is available here (also a very WIP version):
+Documentation is available here (also a VERY WIP version):
 https://danielmazurkiewicz.github.io/hussar/
 
 Documentation itself uses this framework so for now it can give you a glympse of how to use it.
-
+Look especially at:
+https://github.com/DanielMazurkiewicz/hussar/blob/main/docs/src/components/filter.mjs
+https://github.com/DanielMazurkiewicz/hussar/blob/main/docs/src/components/method.mjs
