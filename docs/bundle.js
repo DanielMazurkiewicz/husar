@@ -937,8 +937,12 @@
   // random.mjs
   var crypto = wnd.crypto;
 
+  // dateTime.mjs
+  "use strict";
+  var date = new Date(0);
+
   // store.mjs
-  var StoreObjectBase = (type) => {
+  var StoreObjectBase = (kindId) => {
     const delTemporary = () => {
       if (obj.parent) {
         obj.parentContent.onElementDel(obj);
@@ -952,7 +956,7 @@
       }
     };
     const obj = {
-      type,
+      kindId,
       parent: null,
       parentContent: null,
       previous: null,
@@ -985,9 +989,12 @@
     };
     return obj;
   };
-  var StoreValue = (objectToExtend, name, type = "content-value") => {
+  var $Boolean_KindId = -4;
+  var $ListOfReferences_KindId = -17;
+  var NEXT_INTERNAL_KIND_ID = $ListOfReferences_KindId - 1;
+  var StoreNewValueType = (kindId) => (objectToExtend, name) => {
     const obj = objectToExtend[name] = {
-      type,
+      kindId,
       owner: objectToExtend,
       name,
       value: null,
@@ -1003,8 +1010,8 @@
     obj.onChange = SoftEvent(objectToExtend, obj);
     return obj;
   };
-  var $Boolean = StoreValue;
-  var internalKindId = -1;
+  var $Boolean = /* @__PURE__ */ StoreNewValueType($Boolean_KindId);
+  var internalKindId = NEXT_INTERNAL_KIND_ID;
   var StoreKind = (...description2) => {
     let name;
     const descriptionResolved = {};

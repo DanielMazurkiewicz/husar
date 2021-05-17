@@ -128,3 +128,5 @@ export const stringToTime = (input, expect = Hour) => {
     date.setUTCSeconds(asNumbers[2]);
     return date.getTime();
 };
+
+export const getTimestamp = () => Date.now();

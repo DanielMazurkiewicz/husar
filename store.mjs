@@ -18,9 +18,10 @@ import { replaceChild }                     from "./core.mjs";
 import { removeChild }                      from "./core.mjs";
 import { appendChildBefore }                from "./core.mjs";
 import { appendChildOnBottom }              from "./core.mjs";
+import { getTimestamp } from "./dateTime.mjs";
 
 
-export const StoreObjectBase = (type) => {
+export const StoreObjectBase = (kindId) => {
     const delTemporary = () => {
         if (obj.parent) {
             obj.parentContent.onElementDel(obj);
@@ -37,7 +38,7 @@ export const StoreObjectBase = (type) => {
 
     const obj = {
         // id:             getRandomString(10),
-        type,
+        kindId,
 
         parent:         null,
         parentContent:  null,
@@ -82,8 +83,51 @@ export const StoreObjectBase = (type) => {
 }
 
 //==================================================================
+/*
+export const $NowFixed_KindId           = '$NowFixed';
+export const $UidFixed_KindId           = '$UidFixed';
+export const $Reference_KindId          = '$Reference';
+export const $Boolean_KindId            = '$Boolean';
+export const $Unsigned_KindId           = '$Unsigned';
+export const $Signed_KindId             = '$Signed';
+export const $Float_KindId              = '$Float';
+export const $Date_KindId               = '$Date';
+export const $Text_KindId               = '$Text';
+export const $Email_KindId              = '$Email';
+export const $Color_KindId              = '$Color';
+export const $Url_KindId                = '$Url';
+export const $Uid_KindId                = '$Uid';
+export const $Data_KindId               = '$Data';
 
-export const StoreList = (objectToExtend, name, type='content-list') => {
+export const $List_KindId               = '$List';
+export const $ListIndexed_KindId        = '$ListIndexed';
+export const $ListOfReferences_KindId   = '$ListOfReferences';
+*/
+
+export const $NowFixed_KindId           = -1;
+export const $UidFixed_KindId           = -2;
+export const $Reference_KindId          = -3;
+export const $Boolean_KindId            = -4;
+export const $Unsigned_KindId           = -5;
+export const $Signed_KindId             = -6;
+export const $Float_KindId              = -7;
+export const $Date_KindId               = -8;
+export const $Text_KindId               = -9;
+export const $Email_KindId              = -10;
+export const $Color_KindId              = -11;
+export const $Url_KindId                = -12;
+export const $Uid_KindId                = -13;
+export const $Data_KindId               = -14;
+
+export const $List_KindId               = -15;
+export const $ListIndexed_KindId        = -16;
+export const $ListOfReferences_KindId   = -17;
+
+const NEXT_INTERNAL_KIND_ID = $ListOfReferences_KindId - 1;
+
+//==================================================================
+
+export const StoreNewListType = kindId => (objectToExtend, name) => {
 
     const addOnTop =   (element) => {
         element.delTemporary();
@@ -118,7 +162,7 @@ export const StoreList = (objectToExtend, name, type='content-list') => {
     }
 
     const obj = objectToExtend[name] = {
-        type,
+        kindId,
         owner:          objectToExtend,
         name,
 
@@ -147,17 +191,18 @@ export const StoreList = (objectToExtend, name, type='content-list') => {
     
     return obj;
 }
+const StoreList_ListIndexed = /*@__PURE__*/StoreNewListType($ListIndexed_KindId);
 export const StoreListIndexed = (objectToExtend, name) => {
-    const obj = StoreList(objectToExtend, name, 'content-list-indexed');
+    const obj = StoreList_ListIndexed(objectToExtend, name);
     const index = new Map();
     obj.onElementAdd.add(e => index.set(e, e));
     obj.onElementDel.add(e => index.delete(e));
     obj.contain = (e) => index.has(e) && e;
     return obj;
 }
-export const StoreValue = (objectToExtend, name, type='content-value') => {
+export const StoreNewValueType = (kindId) => (objectToExtend, name) => {
     const obj = objectToExtend[name] = {
-        type,
+        kindId,
         owner:          objectToExtend,
         name,
 
@@ -175,8 +220,9 @@ export const StoreValue = (objectToExtend, name, type='content-value') => {
     
     return obj;
 }
+const StoreValue_Reference = /*@__PURE__*/StoreNewValueType($Reference_KindId);
 export const StoreReference = (objectToExtend, name) => {
-    const obj = StoreValue(objectToExtend, name, 'content-reference');
+    const obj = StoreValue_Reference(objectToExtend, name);
     obj.onChange.add((newRef, oldRef) => {
         obj.onReferenceDel.raise(oldRef);
         obj.onReferenceAdd.raise(newRef);
@@ -191,7 +237,7 @@ export const StoreReferencesList = (objectToExtend, name) => {
     const map = new Map();
 
     const obj = objectToExtend[name] = {
-        type:           'content-references-list',
+        kindId:           $ListOfReferences_KindId,
         owner:          objectToExtend,
         name,
 
@@ -219,20 +265,41 @@ export const StoreReferencesList = (objectToExtend, name) => {
     return obj;
 }
 
+// -----------------------------------------------------------
+
+export const $NowFixed          = (objectToExtend, name) => {
+    objectToExtend[name] = {
+        kindId: NowFixed_KindId,
+        value: getTimestamp()
+    }
+};
+export const $UidFixed          = (objectToExtend, name) => {
+    objectToExtend[name] = {
+        kindId: UidFixed_KindId,
+        value: getRandomString(10)
+    }
+};
 export const $Reference         = StoreReference;
-export const $Boolean           = StoreValue;
-export const $Unsigned          = StoreValue;
-export const $Signed            = StoreValue;
-export const $Float             = StoreValue;
-export const $Text              = StoreValue;
-export const $List              = StoreList;
+export const $Boolean           = /*@__PURE__*/StoreNewValueType($Boolean_KindId);
+export const $Unsigned          = /*@__PURE__*/StoreNewValueType($Unsigned_KindId);
+export const $Signed            = /*@__PURE__*/StoreNewValueType($Unsigned_KindId);
+export const $Float             = /*@__PURE__*/StoreNewValueType($Signed_KindId);
+export const $Date              = /*@__PURE__*/StoreNewValueType($Date_KindId);
+export const $Text              = /*@__PURE__*/StoreNewValueType($Text_KindId);
+export const $Email             = /*@__PURE__*/StoreNewValueType($Email_KindId);
+export const $Color             = /*@__PURE__*/StoreNewValueType($Color_KindId);
+export const $Url               = /*@__PURE__*/StoreNewValueType($Url_KindId);
+export const $Uid               = /*@__PURE__*/StoreNewValueType($Uid_KindId);
+// export const $Data              = StoreNewValueType($Data_KindId);
+
+export const $List              = /*@__PURE__*/StoreNewListType($List_KindId);
 export const $ListIndexed       = StoreListIndexed;
 export const $ListOfReferences  = StoreReferencesList;
 
 
 //==================================================================
 
-let internalKindId = -1;
+let internalKindId = NEXT_INTERNAL_KIND_ID;
 export const StoreKind = (...description) => {
     let name;
 
@@ -292,7 +359,7 @@ export const StoreSyncList = (list, htmlRouter) => (parentHTML) => {
     // -----------------------------------------
 
     const elementAddEvent = el => {
-        const constructor = constructors[el.type] || fallback;
+        const constructor = constructors[el.kindId] || fallback;
         if (constructor) {
             const childHTML = constructor(el);
             if (childHTML) {
@@ -341,7 +408,7 @@ export const StoreSyncList = (list, htmlRouter) => (parentHTML) => {
                         appendChildOnBottom(parentHTML, childHTMLFromList);
                         newChildrenList.set(el, childHTMLFromList);
                     } else {
-                        const constructor = constructors[el.type] || fallback;
+                        const constructor = constructors[el.kindId] || fallback;
                         if (constructor) {
                             const childHTML = constructor(el);
                             if (childHTML) {
@@ -383,7 +450,7 @@ export const StoreSyncReference = (ref, htmlRouter) => (parentHTML) => {
 
 
     const getChildHTML = (el) => {
-        const constructor = (el && constructors[el.type]) || fallback;
+        const constructor = (el && constructors[el.kindId]) || fallback;
 
         let childHTML = constructor(el);
         if (!childHTML) {

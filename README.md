@@ -48,7 +48,8 @@ import { body, div, span } from 'hussar/core.mjs';
 
 // === DATA ===
 const list = [
-    {name: "John", surname: "Kowalski"};
+    {name: "John", surname: "Kowalski"},
+    {name: "Andrew", surname: "Nowak"}
 ];
 
 // === STYLES ===
