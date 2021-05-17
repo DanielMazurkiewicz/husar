@@ -44,7 +44,7 @@ At current stage it starts to be usable:
 
 ### "static" components
 ```javascript
-import { body, div, span } from 'husar/core.mjs';
+import { body, div, span } from 'hussar/core.mjs';
 
 // === DATA ===
 const list = [
