@@ -46,17 +46,19 @@ At current stage it starts to be usable:
 ```javascript
 import { body, div, span } from 'husar/core.mjs';
 
-
+// === DATA ===
 const list = [
     {name: "John", surname: "Kowalski"};
 ];
 
+// === STYLES ===
 const surnameStyle = style({
     text: {
         color: 'blue'
     }
 });
 
+// === COMPONENTS ===
 const nameSurname = ({name, surname}) =>
     div(
         'Name and surname: ', name, span(surnameStyle, surname)
@@ -67,10 +69,10 @@ const namesList = list =>
         ...list.map(nameSurname)
     );
 
-
+// === MAIN ===
 body(
     namesList(list)
-)
+);
 
 ```
 
