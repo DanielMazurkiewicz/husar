@@ -44,6 +44,21 @@ export const assignTextInputUserChangeEvents = (element, callback) => {
 }
 
 
+const assignOnValueChange = (element) => {
+    if (element.onValueChange) return;
+    element.onValueChange = SoftEvent(element);
+    assignTextInputUserChangeEvents(element, (v, old) => {
+        element.onValueChange.raise(v, old, element);
+        return TRUE;
+    });
+}
+
+
+export const autogrowSimple = element => {
+    assignOnValueChange(element);
+    element.onValueChange.add( ()=> element.size = Math.max(element.value.length, 1))
+}
+
 // --=======================================================================================--
 
 export const typeText = (element) => {
@@ -56,33 +71,8 @@ export const typeText = (element) => {
         }
     }
     element.g = () => element.value;
-    element.onValueChange = SoftEvent(element);
-    assignTextInputUserChangeEvents(element, (v, old) => {
-        element.onValueChange.raise(v, old, element);
-        return TRUE;
-    });
+    assignOnValueChange(element);
 }
-
-export const typeCheckbox1 = (element) => {
-    setAttribute(element, 'type', 'checkbox');
-
-    element.s = (v) => {
-        const old = element.checked;
-        if (v !== old) {
-            element.checked = v;
-            element.onValueChange.raise(v, old, element);
-        }
-    }
-    element.g = () => element.checked;
-    element.onValueChange = SoftEvent(element);
-    onCh
-
-    assignTextInputUserChangeEvents(element, (v, old) => {
-        element.onValueChange.raise(v, old, element);
-        return TRUE;
-    });
-}
-
 
 export const typeCheckbox = (element) => {
     setAttribute(element, 'type', 'checkbox');
