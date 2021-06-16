@@ -220,6 +220,12 @@ export const StoreNewValueType = (kindId) => (objectToExtend, name) => {
     
     return obj;
 }
+const StoreValue_Boolean = /*@__PURE__*/StoreNewValueType($Boolean_KindId);
+export const StoreBoolean = (objectToExtend, name) => {
+    const obj = StoreValue_Boolean(objectToExtend, name);
+    obj.t = () => obj.g() ? obj.s(0) : obj.s(1);
+    return obj;
+}
 const StoreValue_Reference = /*@__PURE__*/StoreNewValueType($Reference_KindId);
 export const StoreReference = (objectToExtend, name) => {
     const obj = StoreValue_Reference(objectToExtend, name);
@@ -280,7 +286,7 @@ export const $UidFixed          = (objectToExtend, name) => {
     }
 };
 export const $Reference         = StoreReference;
-export const $Boolean           = /*@__PURE__*/StoreNewValueType($Boolean_KindId);
+export const $Boolean           = StoreBoolean;
 export const $Unsigned          = /*@__PURE__*/StoreNewValueType($Unsigned_KindId);
 export const $Signed            = /*@__PURE__*/StoreNewValueType($Unsigned_KindId);
 export const $Float             = /*@__PURE__*/StoreNewValueType($Signed_KindId);
