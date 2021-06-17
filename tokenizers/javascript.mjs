@@ -86,12 +86,12 @@ const numberHex = numberPrefixed(digitHexChars);
 const number = (text, start, pos, tokenKindId, currentRoot, tokens) => {
     let qualificator = digitAllowedChars, dot=0, op;
 
-    for (let i = start; i < pos; i++) {
-        const char = text[i];
-        if (char === '.') dot++;
-    }
+    // for (let i = start; i < pos; i++) {
+    //     const char = text[i];
+    //     if (char === '.') dot++;
+    // }
 
-    for (let i = pos; i < text.length; i++) {
+    for (let i = start; i < text.length; i++) {
         const char = text[i];
         if (char === '.') {
             dot++;
