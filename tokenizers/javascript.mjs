@@ -1,9 +1,9 @@
-import { makeCharList } from "../core.mjs";
-import { UNDEFINED } from "../core.mjs";
-import { isArray } from "../core.mjs";
-import { TRUE } from "../core.mjs";
-import { excludeFromCharList } from "../core.mjs";
-import { isString } from "../core.mjs";
+import { makeCharList } from "../coreJs.mjs";
+import { UNDEFINED } from "../coreJs.mjs";
+import { isArray } from "../coreJs.mjs";
+import { TRUE } from "../coreJs.mjs";
+import { excludeFromCharList } from "../coreJs.mjs";
+import { isString } from "../coreJs.mjs";
 import { tokenizerKey } from "../tokenizer.mjs";
 import { TokenizeSync } from "../tokenizer.mjs";
 import { tokenizerExec } from "../tokenizer.mjs";
@@ -39,9 +39,35 @@ const commentMulti = () => {
 
 }
 
-const string = () => {
+const string = (text, start, pos, tokenKindId, currentRoot, tokens) => {
+    const op = text.substring(start, pos);
 
+    for (let i = pos; i < text.length; i++) {
+        const char = text[i];
+
+        if (char === '\\') {
+            // TODO: support for unicode characters: \u
+            i++;
+        } else if (char === op) {
+            tokens.push({
+                kindId: tokenKindId,
+                token: text.substring(pos, i),
+                op,
+            })
+            return i + 1;
+        }
+    }
+
+    tokens.push({
+        kindId: tokenKindId,
+        token:  text.substring(pos),
+        op,
+    });
+
+    return text.length;
 }
+
+
 const digitBinaryChars = makeCharList('01');
 const digitOctalChars = makeCharList(digitBinaryChars, '234567');
 const digitChars = makeCharList(digitOctalChars, '89');
@@ -85,11 +111,6 @@ const numberHex = numberPrefixed(digitHexChars);
 
 const number = (text, start, pos, tokenKindId, currentRoot, tokens) => {
     let qualificator = digitAllowedChars, dot=0, op;
-
-    // for (let i = start; i < pos; i++) {
-    //     const char = text[i];
-    //     if (char === '.') dot++;
-    // }
 
     for (let i = start; i < text.length; i++) {
         const char = text[i];
@@ -151,7 +172,36 @@ const space = (text, start, pos, tokenKindId, currentRoot, tokens) => {
     return text.length;
 }
 
+
+const specialChars = makeCharList('~`!@#$%^&*()_-+={[}]|\\:;"\'<,>.?/ \n\t\r');
+const name = (text, start, pos, tokenKindId, currentRoot, tokens) => {
+    for (let i = pos; i < text.length; i++) {
+        const char = text[i];
+
+        if (specialChars[char]) {
+            if (pos === i) return;
+            tokens.push({
+                kindId: tokenKindId,
+                token: text.substring(start, i),
+            })
+            return i;
+        }
+    }
+
+    if (pos === i) return;
+    tokens.push({
+        kindId: tokenKindId,
+        token:  text.substring(start),
+    });
+
+    return text.length;
+}
+
+
+
 export const javascriptScheme = TokenizerScheme({
+    NAME:           tokenizerFallback(name),
+
     BIT:            ['&', '|', '^', '>>', '>>>', '<<'],
     BIT_SINGLE:     ['~'],
 
@@ -253,12 +303,12 @@ export const javascriptScheme = TokenizerScheme({
 
 
 
-
 const code = `
 123.34.55
 0x2aFg
 10.1e-130;
-
+"aaa\\"ccc"
+'bbb\\'ddd'
 const space = (text, start, pos, tokenKindId, currentRoot, tokens) => {
     for (let i = pos; i < text.length; i++) {
         const char = text[i];

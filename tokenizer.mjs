@@ -1,8 +1,8 @@
-import { makeCharList } from "./core.mjs";
-import { UNDEFINED }    from "./core.mjs";
-import { isArray }      from "./core.mjs";
-import { TRUE }         from "./core.mjs";
-import { isString }     from "./core.mjs";
+import { makeCharList } from "./coreJs.mjs";
+import { UNDEFINED }    from "./coreJs.mjs";
+import { isArray }      from "./coreJs.mjs";
+import { TRUE }         from "./coreJs.mjs";
+import { isString }     from "./coreJs.mjs";
 
 const applyTokenOnTokensMap = (token, tokensMap = {children:{}}) => {
     for (let i = 0; i < token.length; i++) {
@@ -44,6 +44,9 @@ export const TokenizerScheme = (scheme) => {
                     currentMap.execWithTokenKindId = tokenKindId;
                     currentMap.exec = token.exec    
                 });
+            } else if (token.fallback) {
+                tokensMapRoot.fallbackWithTokenKindId = tokenKindId
+                tokensMapRoot.fallback = token.fallback;
             } else if (token.tokens) {
                 token.tokens.forEach(k => {
                     tokensKeywords[k] = tokenKindId;
@@ -61,19 +64,22 @@ export const TokenizerScheme = (scheme) => {
 
 }
 export const TokenizeSync = (text, schemeMap, pos = 0, tokens = []) => {
+    const { fallback } = schemeMap;
     let unknownStart = -1;
     let unknownEnd = -1;
     const pushUnknown = () => {
         if (unknownStart >= 0) {
-            const token = text.substring(unknownStart, unknownEnd + 1);
+            const start = unknownStart, end = unknownEnd + 1;
+            const token = text.substring(start, end);
             tokens.push({
                 kindId: schemeMap.keywords[token] || -1,
-                token
+                token,
+                start,
+                end
             });
             unknownStart = -1;
         }
     }
-
 
     for (let i = pos; i < text.length; i++) {
         let confirmedPos = -1, confirmedTokenKindId, currentRoot = schemeMap;
@@ -85,7 +91,6 @@ export const TokenizeSync = (text, schemeMap, pos = 0, tokens = []) => {
                 break;
             }
             currentRoot = currentRoot.children[char];
-
 
             if (currentRoot.exec) {
                 endPositionAfterExec = currentRoot.exec(text, i, j + 1, currentRoot.execWithTokenKindId, currentRoot, tokensAfterExec)
@@ -104,10 +109,12 @@ export const TokenizeSync = (text, schemeMap, pos = 0, tokens = []) => {
 
         if (confirmedPos >= 0) {
             pushUnknown();
-
+            const start = i, end = confirmedPos + 1;
             tokens.push({
                 kindId: confirmedTokenKindId,
-                token: text.substring(i, confirmedPos+1)
+                token: text.substring(start, end),
+                start,
+                end
             });
 
             i = confirmedPos;
@@ -118,7 +125,22 @@ export const TokenizeSync = (text, schemeMap, pos = 0, tokens = []) => {
             i = endPositionAfterExec-1;
         } else {
             if (unknownStart < 0) {
-                unknownStart = unknownEnd = i;
+
+                if (fallback) {
+                    endPositionAfterExec = fallback(text, i, i, schemeMap.fallbackWithTokenKindId, currentRoot, tokensAfterExec)
+                }
+
+                if (endPositionAfterExec) {
+                    tokensAfterExec.forEach(t => {
+                        const keywordKindId = schemeMap.keywords[t.token];
+                        if (keywordKindId) t.kindId = keywordKindId;
+                    });
+                    
+                    tokens.push(...tokensAfterExec);
+                    i = endPositionAfterExec - 1;
+                } else {
+                    unknownStart = unknownEnd = i;
+                }
             } else {
                 unknownEnd = i;
             }
@@ -155,3 +177,11 @@ export const tokenizerKey = (...tokens) => {
     }
 }
 
+export const tokenizerFallback = (fallback) => {
+    return {
+        fallback,
+    }
+}
+
+export const getTokenText = (text, start, end) => 
+    text.substring(start.start, end ? end.end : start.end);

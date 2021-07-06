@@ -1,8 +1,8 @@
 "use strict"
 
 import { settings } from "./settings";
-import { UNDEFINED } from "./core.mjs";
-import { isNumber } from "./core.mjs";
+import { UNDEFINED } from "./coreJs.mjs";
+import { isNumber } from "./coreJs.mjs";
 
 export const numberToString = (num, decimals = 0, separator = settings.numberSeparator) => {
 

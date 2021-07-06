@@ -1,7 +1,7 @@
 "use strict"
 
-import { UNDEFINED } from "./core.mjs";
-import { isObject } from "./core.mjs";
+import { UNDEFINED } from "./coreJs.mjs";
+import { isObject } from "./coreJs.mjs";
 
 export const objectAssign = (...elements) => Object.assign(...elements);
 

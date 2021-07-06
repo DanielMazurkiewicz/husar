@@ -1,6 +1,6 @@
 "use strict"
 
-import { UNDEFINED } from "./core.mjs";
+import { UNDEFINED } from "./coreJs.mjs";
 
 const fullDaysFactor = 86400000;
 const date = new Date(0);

@@ -1,6 +1,6 @@
 "use strict"
 
-import { makeCharList } from "./core.mjs";
+import { makeCharList } from "./coreJs.mjs";
 
 export const stringJoin = (elements, delimiter) => elements.join(delimiter);
 export const stringDataFormat = (mime, content, encoding = 'utf8') => `data:${mime};${encoding},` + content;
